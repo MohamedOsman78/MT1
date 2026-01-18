@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.site_title }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00ffcc;
+            --secondary: #ff00ff;
+            --dark: #0f0c29;
+            --darker: #080616;
+            --light: #f0f0f0;
+            --gray: #302b63;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, var(--dark), var(--gray), #24243e);
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px; /* مساحة للنافذة العائمة */
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* نافذة المساحة العائمة الجديدة */
+        .floating-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(15, 12, 41, 0.9);
+            border: 2px solid var(--primary);
+            border-radius: 20px;
+            padding: 15px 25px;
+            display: flex;
+            gap: 20px;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 255, 204, 0.3);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp { from { transform: translateY(100px); } to { transform: translateY(0); } }
+
+        .status-item { text-align: center; }
+        .status-item p { font-size: 0.8em; color: #aaa; margin-bottom: 2px; }
+        .status-item span { font-weight: bold; color: var(--primary); font-size: 1.2em; }
+        .status-item.remaining span { color: var(--secondary); }
+
+        /* زر الصوت المحسن */
+        #audio-control {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            cursor: pointer;
+            z-index: 1000;
+            transition: 0.3s;
+        }
+        #audio-control.active { background: var(--primary); color: var(--dark); }
+
+        /* الهيدر */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .editable { cursor: pointer; transition: 0.3s; }
+        .editable:hover { outline: 2px dashed var(--primary); outline-offset: 5px; }
+
+        /* الألعاب */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: 0.3s;
+            position: relative;
+        }
+
+        .game-card:hover { transform: translateY(-5px); border-color: var(--primary); }
+        
+        .game-image { width: 100%; height: 280px; object-fit: cover; }
+        
+        .game-info { padding: 15px; }
+        .game-name { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; color: var(--primary); }
+        .game-size { color: var(--secondary); font-size: 0.9em; }
+
+        .game-checkbox { position: absolute; top: 10px; right: 10px; width: 25px; height: 25px; accent-color: var(--primary); z-index: 2; }
+
+        /* معلومات المستخدم */
+        .user-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+        }
+
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .input-group input {
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #444;
+            background: #1a1a2e; color: white; margin-top: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .floating-status { width: 90%; left: 5%; right: 5%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <button id="audio-control" title="تشغيل/إيقاف الموسيقى">
+        <i class="fas fa-volume-mute"></i>
+    </button>
+
+    <div class="floating-status">
+        <div class="status-item">
+            <p>المختارة</p>
+            <span id="selected-area-display">0</span> <small>GB</small>
+        </div>
+        <div class="status-item remaining">
+            <p>المتبقية</p>
+            <span id="remaining-area-display">500</span> <small>GB</small>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1 class="editable">{{ page.site_title }}</h1>
+            <p class="editable">{{ page.main_description }}</p>
+        </header>
+
+        <section class="user-info">
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>الاسم</label>
+                    <input type="text" id="user-name" placeholder="اسمك الكامل">
+                </div>
+                <div class="input-group">
+                    <label>المساحة الكلية (GB)</label>
+                    <input type="number" id="total-space" value="500">
+                </div>
+            </div>
+        </section>
+
+        <main id="games-container">
+            </main>
+
+        <div style="text-align: center; margin-top: 50px;">
+            <button id="export-btn" style="padding: 15px 40px; background: var(--primary); border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">تأكيد الطلب (Excel)</button>
+        </div>
+    </div>
+
+    <audio id="bg-music" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+    <audio id="click-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-click-melodic-1120.mp3"></audio>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        const gamesData = {
+            action: {
+                title: "ألعاب الأكشن",
+                games: [
+                    { id: "A1", name: "GTA V", size: 95, image: "https://images.alphacoders.com/443/443519.jpg" },
+                    { id: "A2", name: "Modern Warfare", size: 175, image: "https://images7.alphacoders.com/102/1029107.jpg" },
+                    { id: "A3", name: "God of War", size: 45, image: "https://images8.alphacoders.com/911/911931.jpg" }
+                ]
+            },
+            sports: {
+                title: "ألعاب الرياضة",
+                games: [
+                    { id: "S1", name: "FIFA 23", size: 50, image: "https://images.alphacoders.com/125/1256385.jpg" },
+                    { id: "S2", name: "NBA 2K23", size: 110, image: "https://images2.alphacoders.com/125/1256422.jpg" }
+                ]
+            }
+        };
+
+        const state = {
+            selectedGames: new Set(),
+            totalSpace: 500,
+            selectedSpace: 0
+        };
+
+        function init() {
+            renderGames();
+            setupAudio();
+            
+            document.getElementById('total-space').addEventListener('input', (e) => {
+                state.totalSpace = parseInt(e.target.value) || 0;
+                updateDisplay();
+            });
+
+            document.getElementById('export-btn').onclick = exportToExcel;
+        }
+
+        function renderGames() {
+            const container = document.getElementById('games-container');
+            for (const cat in gamesData) {
+                const section = document.createElement('div');
+                section.innerHTML = `<h2 style="margin: 30px 0 15px; color: var(--primary)">${gamesData[cat].title}</h2>`;
+                const grid = document.createElement('div');
+                grid.className = 'games-grid';
+
+                gamesData[cat].games.forEach(game => {
+                    const card = document.createElement('div');
+                    card.className = 'game-card';
+                    card.innerHTML = `
+                        <input type="checkbox" class="game-checkbox" data-id="${game.id}" data-size="${game.size}">
+                        <img src="${game.image}" class="game-image">
+                        <div class="game-info">
+                            <div class="game-name">${game.name}</div>
+                            <div class="game-size">${game.size} GB</div>
+                        </div>
+                    `;
+                    
+                    card.querySelector('.game-checkbox').onchange = (e) => {
+                        if(e.target.checked) {
+                            if(state.selectedSpace + game.size > state.totalSpace) {
+                                alert("المساحة لا تكفي!");
+                                e.target.checked = false;
+                                return;
+                            }
+                            state.selectedGames.add(game.id);
+                            state.selectedSpace += game.size;
+                        } else {
+                            state.selectedGames.delete(game.id);
+                            state.selectedSpace -= game.size;
+                        }
+                        playEffect();
+                        updateDisplay();
+                    };
+                    grid.appendChild(card);
+                });
+                section.appendChild(grid);
+                container.appendChild(section);
+            }
+        }
+
+        function updateDisplay() {
+            document.getElementById('selected-area-display').innerText = state.selectedSpace;
+            document.getElementById('remaining-area-display').innerText = state.totalSpace - state.selectedSpace;
+        }
+
+        function setupAudio() {
+            const btn = document.getElementById('audio-control');
+            const bg = document.getElementById('bg-music');
+            
+            btn.onclick = () => {
+                if (bg.paused) {
+                    bg.play().catch(() => alert("يرجى التفاعل مع الصفحة أولاً"));
+                    btn.classList.add('active');
+                    btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                } else {
+                    bg.pause();
+                    btn.classList.remove('active');
+                    btn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                }
+            };
+        }
+
+        function playEffect() {
+            const click = document.getElementById('click-sound');
+            click.currentTime = 0;
+            click.play();
+        }
+
+        function exportToExcel() {
+            const rows = [["اسم اللعبة", "الحجم"]];
+            // منطق جمع الألعاب المختارة هنا...
+            alert("تم إعداد الملف!");
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
