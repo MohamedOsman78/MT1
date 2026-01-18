@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>متجر الألعاب الإلكتروني</title>
+    
+    <!-- Cloud Cannon meta tags -->
+    <meta name="cloudcannon:label" content="عنوان الصفحة">
+    <meta name="cloudcannon:author" content="متجر الألعاب">
+    
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         :root {
             --primary: #00ffcc;
@@ -214,9 +220,24 @@
             color: white;
         }
 
+        /* زر إضافة تصنيف (للمالك فقط) */
+        .admin-controls {
+            display: none; /* مخفي افتراضيًا، يمكن تفعيله عبر Cloud Cannon */
+            background: rgba(255, 0, 0, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 0, 0, 0.3);
+        }
+
+        .admin-controls h3 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+
         .add-category-btn {
             padding: 12px 25px;
-            background: linear-gradient(45deg, var(--secondary), var(--primary));
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
             border: none;
             border-radius: 10px;
             color: white;
@@ -230,7 +251,7 @@
 
         .add-category-btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(255, 0, 255, 0.4);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
         }
 
         /* عرض المساحة */
@@ -361,6 +382,7 @@
             height: 180px;
             object-fit: cover;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: #1a1a2e; /* لون خلفية مؤقت */
         }
 
         .game-info {
@@ -417,7 +439,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             z-index: 2000;
             align-items: center;
             justify-content: center;
@@ -427,7 +449,7 @@
         .modal-content {
             background: linear-gradient(135deg, #1a1a2e, #16213e);
             width: 90%;
-            max-width: 800px;
+            max-width: 900px;
             max-height: 90vh;
             border-radius: 20px;
             overflow: hidden;
@@ -474,19 +496,31 @@
             max-height: 65vh;
         }
 
-        .modal-game-image {
+        .video-container {
+            position: relative;
             width: 100%;
-            max-height: 300px;
-            object-fit: cover;
-            border-radius: 10px;
+            padding-bottom: 56.25%; /* نسبة 16:9 */
+            height: 0;
             margin-bottom: 20px;
+            border-radius: 10px;
+            overflow: hidden;
             border: 2px solid var(--primary);
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
         }
 
         .game-description {
             line-height: 1.8;
             color: #ccc;
             margin-bottom: 25px;
+            font-size: 1.1em;
         }
 
         .game-specs {
@@ -551,7 +585,7 @@
             box-shadow: 0 10px 25px rgba(255, 0, 255, 0.5);
         }
 
-        /* إضافة تصنيف جديد */
+        /* إضافة تصنيف جديد (للمالك فقط) */
         .add-category-modal {
             display: none;
             position: fixed;
@@ -623,6 +657,16 @@
             background: rgba(255, 255, 255, 0.2);
         }
 
+        /* رسالة عندما لا توجد ألعاب */
+        .no-games {
+            text-align: center;
+            padding: 50px;
+            color: #aaa;
+            font-size: 1.2em;
+            background: rgba(20, 20, 40, 0.5);
+            border-radius: 15px;
+        }
+
         /* التكيف مع الشاشات الصغيرة */
         @media (max-width: 768px) {
             .games-grid {
@@ -641,7 +685,7 @@
                 align-items: stretch;
             }
             
-            .search-box, .category-filter, .add-category-btn {
+            .search-box, .category-filter {
                 width: 100%;
             }
             
@@ -666,6 +710,10 @@
             .game-specs {
                 grid-template-columns: 1fr;
             }
+            
+            .video-container {
+                padding-bottom: 56.25%;
+            }
         }
 
         @media (max-width: 480px) {
@@ -685,6 +733,10 @@
                 padding: 12px 25px;
                 font-size: 1.1em;
             }
+            
+            .modal-content {
+                width: 95%;
+            }
         }
     </style>
 </head>
@@ -694,10 +746,20 @@
     </button>
 
     <div class="container">
-        <header>
-            <h1><i class="fas fa-gamepad"></i> متجر الألعاب الإلكتروني</h1>
-            <p>اختر ألعابك المفضلة من بين مجموعة واسعة من الألعاب المصنفة حسب النوع. تأكد من أن المساحة الإجمالية المختارة لا تتجاوز المساحة المتاحة لك.</p>
+        <!-- Cloud Cannon: إمكانية تحرير العنوان والوصف -->
+        <header data-cms-editable data-cms-name="header">
+            <h1 data-cms-field="title">متجر الألعاب الإلكتروني</h1>
+            <p data-cms-field="description">اختر ألعابك المفضلة من بين مجموعة واسعة من الألعاب المصنفة حسب النوع. تأكد من أن المساحة الإجمالية المختارة لا تتجاوز المساحة المتاحة لك.</p>
         </header>
+
+        <!-- Cloud Cannon: إمكانية التحكم بإظهار أدوات المالك -->
+        <div class="admin-controls" id="admin-controls" data-cms-editable data-cms-name="admin_controls" data-cms-hideable>
+            <h3><i class="fas fa-user-shield"></i> أدوات المالك</h3>
+            <button class="add-category-btn" id="open-category-modal">
+                <i class="fas fa-plus-circle"></i> إضافة تصنيف جديد
+            </button>
+            <p style="margin-top: 10px; color: #aaa; font-size: 0.9em;">هذه الأدوات ظاهرة للمالك فقط لإدارة التصنيفات.</p>
+        </div>
 
         <section class="user-info">
             <h2><i class="fas fa-user-circle"></i> معلومات المستخدم</h2>
@@ -729,17 +791,9 @@
             <div class="category-filter">
                 <select id="category-select">
                     <option value="all">جميع التصنيفات</option>
-                    <option value="action">ألعاب الأكشن</option>
-                    <option value="adventure">ألعاب المغامرات</option>
-                    <option value="sports">ألعاب الرياضة</option>
-                    <option value="racing">ألعاب السباقات</option>
-                    <option value="rpg">ألعاب تقمص الأدوار</option>
-                    <option value="strategy">ألعاب الاستراتيجية</option>
+                    <!-- التصنيفات سيتم ملؤها ديناميكيًا -->
                 </select>
             </div>
-            <button class="add-category-btn" id="open-category-modal">
-                <i class="fas fa-plus-circle"></i> إضافة تصنيف جديد
-            </button>
         </section>
 
         <section class="area-display">
@@ -761,7 +815,8 @@
             </div>
         </section>
 
-        <main id="games-container">
+        <!-- Cloud Cannon: منطقة الألعاب (سيتم ملؤها من ملف البيانات) -->
+        <main id="games-container" data-cms-area="games_container">
             <!-- سيتم ملء الألعاب ديناميكيًا باستخدام JavaScript -->
         </main>
 
@@ -780,7 +835,9 @@
                 <button class="close-modal" id="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <img id="modal-game-image" src="" alt="صورة اللعبة" class="modal-game-image">
+                <div class="video-container">
+                    <iframe id="modal-game-video" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
                 <p id="modal-game-description" class="game-description">وصف اللعبة...</p>
                 
                 <div class="game-specs">
@@ -805,13 +862,11 @@
                         <span id="modal-game-year">2023</span>
                     </div>
                 </div>
-                
-                <div id="modal-game-trailer"></div>
             </div>
         </div>
     </div>
 
-    <!-- نافذة إضافة تصنيف جديد -->
+    <!-- نافذة إضافة تصنيف جديد (للمالك فقط) -->
     <div class="add-category-modal" id="add-category-modal">
         <div class="add-category-content">
             <h3><i class="fas fa-folder-plus"></i> إضافة تصنيف جديد</h3>
@@ -821,7 +876,7 @@
                     <input type="text" id="new-category-name" placeholder="أدخل اسم التصنيف الجديد">
                 </div>
                 <div class="input-group">
-                    <label for="new-category-icon">أيقونة التصنيف (اختياري)</label>
+                    <label for="new-category-icon">أيقونة التصنيف</label>
                     <select id="new-category-icon">
                         <option value="fas fa-gamepad">أيقونة عامة</option>
                         <option value="fas fa-fist-raised">أكشن</option>
@@ -832,6 +887,8 @@
                         <option value="fas fa-chess">استراتيجية</option>
                         <option value="fas fa-ghost">رعب</option>
                         <option value="fas fa-space-shuttle">خيال علمي</option>
+                        <option value="fas fa-puzzle-piece">أحجية</option>
+                        <option value="fas fa-music">موسيقى</option>
                     </select>
                 </div>
             </div>
@@ -842,74 +899,74 @@
         </div>
     </div>
 
-    <!-- الأصوات -->
-    <audio id="click-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3"></audio>
-    <audio id="hover-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-hover-sfx-3009.mp3"></audio>
-    <audio id="confirm-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3"></audio>
-    <audio id="error-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3"></audio>
-    <audio id="background-music" loop src="https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3"></audio>
-
     <!-- مكتبة Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <script>
-        // بيانات الألعاب مصنفة حسب النوع
-        const gamesData = {
+        // بيانات الألعاب - يمكن إدارتها عبر Cloud Cannon
+        // هذه البيانات الافتراضية التي سيتم تحميلها إذا لم تكن هناك بيانات من Cloud Cannon
+        const defaultGamesData = {
             action: {
                 title: "ألعاب الأكشن",
                 icon: "fas fa-fist-raised",
                 games: [
-                    { id: "ACT-001", name: "Grand Theft Auto V", size: 65, image: "https://upload.wikimedia.org/wikipedia/en/4/4e/Grand_Theft_Auto_V.jpg", year: 2013, description: "لعبة أكشن ومغامرات في عالم مفتوح، تدور أحداثها في مدينة لوس سانتوس الخيالية. تتيح للاعب التحكم بثلاث شخصيات مختلفة وتنفيذ مهام وحركات متنوعة." },
-                    { id: "ACT-002", name: "Call of Duty: Modern Warfare", size: 15, image: "https://upload.wikimedia.org/wikipedia/en/9/9a/Call_of_Duty_Modern_Warfare_cover.jpg", year: 2019, description: "لعبة تصويب من منظور الشخص الأول، تجمع بين القتال الحديث والعمليات الخاصة في سيناريوهات واقعية حول العالم." },
-                    { id: "ACT-003", name: "God of War III", size: 30, image: "https://upload.wikimedia.org/wikipedia/en/0/0e/God_of_War_III.jpg", year: 2010, description: "لعبة أكشن ومغامرات أسطورية، يتحكم اللاعب بكراتوس في رحلته للانتقام من الآلهة الأولمبية في العالم الإغريقي القديم." },
-                    { id: "ACT-004", name: "Battlefield 3", size: 20, image: "https://upload.wikimedia.org/wikipedia/en/6/6b/Battlefield_3_cover_art.jpg", year: 2011, description: "لعبة تصويب تكتيكية من منظور الشخص الأول، تتميز بمعارك واسعة النطاق وتدمير بيئي واقعي." },
-                    { id: "ACT-005", name: "Resident Evil 5", size: 15, image: "https://upload.wikimedia.org/wikipedia/en/0/0e/Resident_Evil_5_Box_Art.jpg", year: 2009, description: "لعبة رعب بقاء من منظور الشخص الثالث، تتبع قصة كريس ريدفيلد في محاربة فيروس يهدد البشرية في أفريقيا." }
+                    { 
+                        id: "ACT-001", 
+                        name: "Grand Theft Auto V", 
+                        size: 65, 
+                        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80", 
+                        year: 2013, 
+                        description: "لعبة أكشن ومغامرات في عالم مفتوح، تدور أحداثها في مدينة لوس سانتوس الخيالية. تتيح للاعب التحكم بثلاث شخصيات مختلفة وتنفيذ مهام وحركات متنوعة.",
+                        video: "https://www.youtube.com/embed/QdBZY2fkU-0"
+                    },
+                    { 
+                        id: "ACT-002", 
+                        name: "Call of Duty: Modern Warfare", 
+                        size: 15, 
+                        image: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80", 
+                        year: 2019, 
+                        description: "لعبة تصويب من منظور الشخص الأول، تجمع بين القتال الحديث والعمليات الخاصة في سيناريوهات واقعية حول العالم.",
+                        video: "https://www.youtube.com/embed/bH1lHCirCGI"
+                    }
                 ]
             },
             adventure: {
                 title: "ألعاب المغامرات",
                 icon: "fas fa-hiking",
                 games: [
-                    { id: "ADV-001", name: "The Last of Us", size: 100, image: "https://upload.wikimedia.org/wikipedia/en/4/46/The_Last_of_Us_cover.jpg", year: 2013, description: "لعبة رعب بقاء ومغامرة عاطفية، تتبع قصة جول وإيلي في عالم ما بعد الوباء حيث يجب عليهما النجاة من كائنات مصابة وبشر يائسين." },
-                    { id: "ADV-002", name: "Uncharted 3: Drake's Deception", size: 30, image: "https://upload.wikimedia.org/wikipedia/en/0/0a/Uncharted_3_Drake%27s_Deception.jpg", year: 2011, description: "لعبة أكشن ومغامرات، تتبع ناثان درايك في رحلته للعثور على إرام ذات العماد الأسطورية عبر صحراء الربع الخالي." },
-                    { id: "ADV-003", name: "The Elder Scrolls V: Skyrim", size: 50, image: "https://upload.wikimedia.org/wikipedia/en/5/5d/The_Elder_Scrolls_V_Skyrim_cover.jpg", year: 2011, description: "لعبة تقمص أدوار في عالم مفتوح ضخم، حيث يلعب اللعب دور 'دراغونبورن' لمحاربة التنين الدنيوي وإنقاذ سكايرم." },
-                    { id: "ADV-004", name: "Assassin's Creed III", size: 25, image: "https://upload.wikimedia.org/wikipedia/en/4/4e/Assassin%27s_Creed_III_cover_art.jpg", year: 2012, description: "لعبة أكشن ومغامرات تاريخية، تتبع قصة كونور، وهو هجين من السكان الأصليين والمستعمرين خلال الثورة الأمريكية." },
-                    { id: "ADV-005", name: "Batman: Arkham City", size: 20, image: "https://upload.wikimedia.org/wikipedia/en/8/84/Batman_Arkham_City_cover_art.jpg", year: 2011, description: "لعبة أكشن ومغامرات، تتبع باتمان وهو يحاول كشف مؤامرة في مدينة أركام، سجن فائق الخطورة في قلب غوثام." }
+                    { 
+                        id: "ADV-001", 
+                        name: "The Last of Us", 
+                        size: 100, 
+                        image: "https://images.unsplash.com/photo-1534423861386-85a16f5d13fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80", 
+                        year: 2013, 
+                        description: "لعبة رعب بقاء ومغامرة عاطفية، تتبع قصة جول وإيلي في عالم ما بعد الوباء حيث يجب عليهما النجاة من كائنات مصابة وبشر يائسين.",
+                        video: "https://www.youtube.com/embed/W2Wnvvj33Wo"
+                    },
+                    { 
+                        id: "ADV-002", 
+                        name: "Uncharted 3: Drake's Deception", 
+                        size: 30, 
+                        image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80", 
+                        year: 2011, 
+                        description: "لعبة أكشن ومغامرات، تتبع ناثان درايك في رحلته للعثور على إرام ذات العماد الأسطورية عبر صحراء الربع الخالي.",
+                        video: "https://www.youtube.com/embed/9dQ4LQtOJuQ"
+                    }
                 ]
             },
             sports: {
                 title: "ألعاب الرياضة",
                 icon: "fas fa-futbol",
                 games: [
-                    { id: "SPT-001", name: "FIFA 15", size: 10, image: "https://upload.wikimedia.org/wikipedia/en/2/2b/FIFA_15_cover_art.jpg", year: 2014, description: "لعبة محاكاة كرة القدم تحتوي على جميع الأندية والبطولات واللاعبين المرخصين، مع محرك جديد يحاكي حركات اللاعبين بشكل واقعي." },
-                    { id: "SPT-002", name: "Gran Turismo 5", size: 40, image: "https://upload.wikimedia.org/wikipedia/en/3/3a/Gran_Turismo_5_Box_Art.jpg", year: 2010, description: "لعبة محاكاة سباقات واقعية تحتوي على مئات السيارات المرخصة والعديد من المسارات الحقيقية والخيالية." },
-                    { id: "SPT-003", name: "WWE 2K20", size: 45, image: "https://upload.wikimedia.org/wikipedia/en/1/1f/WWE_2K20_cover_art.jpg", year: 2019, description: "لعبة محاكاة مصارعة تحتوي على جميع نجوم WWE وعدة أوضاع لعب بما في ذلك القصة والبطولات والمباريات الخاصة." }
-                ]
-            },
-            racing: {
-                title: "ألعاب السباقات",
-                icon: "fas fa-car",
-                games: [
-                    { id: "RAC-001", name: "Gran Turismo 6", size: 35, image: "https://upload.wikimedia.org/wikipedia/en/6/6a/Gran_Turismo_6_Box_Art.jpg", year: 2013, description: "لعبة محاكاة سباقات متطورة تحتوي على أكثر من 1200 سيارة و100 مسار، مع فيزياء واقعية ورسومات عالية الجودة." },
-                    { id: "RAC-002", name: "Need for Speed: Most Wanted", size: 20, image: "https://upload.wikimedia.org/wikipedia/en/2/2a/Need_for_Speed_Most_Wanted_2012_cover.jpg", year: 2012, description: "لعبة سباقات سيارات في عالم مفتوح، تركز على سباقات الشوارع والهروب من الشرطة في مدينة فيروم." },
-                    { id: "RAC-003", name: "MotorStorm", size: 20, image: "https://upload.wikimedia.org/wikipedia/en/4/4b/MotorStorm_cover_art.jpg", year: 2006, description: "لعبة سباقات غير تقليدية في طرق وعرة، مع مجموعة متنوعة من المركبات من الدراجات النارية إلى الشاحنات الضخمة." }
-                ]
-            },
-            rpg: {
-                title: "ألعاب تقمص الأدوار",
-                icon: "fas fa-dragon",
-                games: [
-                    { id: "RPG-001", name: "Final Fantasy XIII", size: 25, image: "https://upload.wikimedia.org/wikipedia/en/2/20/Final_Fantasy_XIII_Box_Art.jpg", year: 2009, description: "لعبة تقمص أدوار يابانية، تتبع قصة مجموعة من الأبطال المصابين بلعنة تجبرهم على تنفيذ مهمة محددة أو التحول إلى كائنات حجرية." },
-                    { id: "RPG-002", name: "Dragon Age: Origins", size: 25, image: "https://upload.wikimedia.org/wikipedia/en/2/2f/Dragon_Age_Origins_cover.jpg", year: 2009, description: "لعبة تقمص أدوار تكتيكية، تضع اللاعب في دور محارب يجب أن يوحد مملكة فيرلدن ضد جيش الظلام القادم." },
-                    { id: "RPG-003", name: "The Elder Scrolls IV: Oblivion", size: 30, image: "https://upload.wikimedia.org/wikipedia/en/8/8d/The_Elder_Scrolls_IV_Oblivion_cover.jpg", year: 2006, description: "لعبة تقمص أدوار في عالم مفتوح، تتبع قصة البطل وهو يحاول إغلاق بوابة العالم السفلي (أوبليفيون) التي تهدد مملكة سايروديل." }
-                ]
-            },
-            strategy: {
-                title: "ألعاب الاستراتيجية",
-                icon: "fas fa-chess",
-                games: [
-                    { id: "STR-001", name: "Civilization V", size: 8, image: "https://upload.wikimedia.org/wikipedia/en/5/5c/Civilization_V_box_shot.jpg", year: 2010, description: "لعبة استراتيجية تعتمد على الدور، حيث يبني اللاعب حضارة من العصر الحجري إلى العصر الحديث ويتنافس مع حضارات أخرى." },
-                    { id: "STR-002", name: "XCOM: Enemy Unknown", size: 12, image: "https://upload.wikimedia.org/wikipedia/en/7/70/Xcom_enemy_unknown_cover.jpg", year: 2012, description: "لعبة استراتيجية تكتيكية، يقود فيها اللاعب منظمة XCOM لمحاربة غزو فضائي للأرض من خلال إدارة القاعدة والتخطيط للمعارك." }
+                    { 
+                        id: "SPT-001", 
+                        name: "FIFA 23", 
+                        size: 50, 
+                        image: "https://images.unsplash.com/photo-1575361204480-aadea25e6e68?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80", 
+                        year: 2022, 
+                        description: "لعبة محاكاة كرة القدم تحتوي على جميع الأندية والبطولات واللاعبين المرخصين، مع محرك جديد يحاكي حركات اللاعبين بشكل واقعي.",
+                        video: "https://www.youtube.com/embed/o3V-GvvzjE4"
+                    }
                 ]
             }
         };
@@ -921,8 +978,9 @@
             selectedSpace: 0,
             remainingSpace: 500,
             audioEnabled: false,
-            categories: Object.keys(gamesData),
-            customCategories: []
+            categories: [],
+            customCategories: [],
+            isAdmin: false // يمكن التحكم فيها عبر Cloud Cannon
         };
 
         // تهيئة التطبيق
@@ -931,11 +989,14 @@
         });
 
         function initializeApp() {
+            // التحقق من صلاحيات المالك (يمكن تعيينها عبر Cloud Cannon)
+            checkAdminStatus();
+            
+            // تحميل البيانات من Cloud Cannon أو استخدام البيانات الافتراضية
+            loadGamesData();
+            
             // تحديث عرض المساحة
             updateAreaDisplay();
-            
-            // عرض الألعاب
-            renderGames();
             
             // إعداد مستمعي الأحداث
             setupEventListeners();
@@ -944,17 +1005,52 @@
             loadSavedData();
         }
 
-        function renderGames() {
+        function checkAdminStatus() {
+            // يمكن لـ Cloud Cannon تعيين هذه القيمة عبر attribute
+            const adminControls = document.getElementById('admin-controls');
+            if (adminControls.getAttribute('data-cms-visible') === 'true') {
+                state.isAdmin = true;
+                adminControls.style.display = 'block';
+            } else {
+                state.isAdmin = false;
+                adminControls.style.display = 'none';
+            }
+        }
+
+        function loadGamesData() {
+            // محاولة تحميل البيانات من Cloud Cannon
+            // إذا لم تكن متوفرة، استخدم البيانات الافتراضية
+            try {
+                // هذا مثال على كيفية تحميل البيانات من Cloud Cannon
+                // في الواقع، Cloud Cannon سيولد ملف بيانات يمكن تحميله
+                if (window.cloudCannonGamesData) {
+                    state.categories = Object.keys(window.cloudCannonGamesData);
+                    renderGames(window.cloudCannonGamesData);
+                } else {
+                    state.categories = Object.keys(defaultGamesData);
+                    renderGames(defaultGamesData);
+                }
+            } catch (error) {
+                console.log("Using default games data:", error);
+                state.categories = Object.keys(defaultGamesData);
+                renderGames(defaultGamesData);
+            }
+            
+            // تحديث قائمة التصنيفات في القائمة المنسدلة
+            updateCategorySelect();
+        }
+
+        function renderGames(gamesData) {
             const container = document.getElementById('games-container');
             container.innerHTML = '';
             
             // جمع جميع التصنيفات (الأصلية + المخصصة)
-            const allCategories = [...state.categories, ...state.customCategories];
+            const allCategories = [...state.categories, ...state.customCategories.map(c => c.id)];
             
             // عرض كل تصنيف
             allCategories.forEach(categoryId => {
                 const category = gamesData[categoryId] || state.customCategories.find(c => c.id === categoryId);
-                if (!category) return;
+                if (!category || !category.games || category.games.length === 0) return;
                 
                 // إنشاء قسم التصنيف
                 const categorySection = document.createElement('section');
@@ -990,6 +1086,18 @@
                 categorySection.appendChild(gamesGrid);
                 container.appendChild(categorySection);
             });
+            
+            // إذا لم توجد ألعاب، عرض رسالة
+            if (container.children.length === 0) {
+                const noGames = document.createElement('div');
+                noGames.className = 'no-games';
+                noGames.innerHTML = `
+                    <i class="fas fa-gamepad" style="font-size: 3em; margin-bottom: 20px; color: var(--primary);"></i>
+                    <h3>لا توجد ألعاب متاحة حالياً</h3>
+                    <p>يرجى التحقق لاحقاً أو إضافة ألعاب جديدة عبر لوحة تحكم Cloud Cannon.</p>
+                `;
+                container.appendChild(noGames);
+            }
         }
 
         function createGameCard(game, categoryId) {
@@ -1014,9 +1122,13 @@
             card.className = 'game-card';
             
             const image = document.createElement('img');
-            image.src = game.image;
+            image.src = game.image || 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80';
             image.alt = game.name;
             image.className = 'game-image';
+            image.onerror = function() {
+                // إذا فشل تحميل الصورة، استخدم صورة افتراضية
+                this.src = 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80';
+            };
             
             const gameInfo = document.createElement('div');
             gameInfo.className = 'game-info';
@@ -1035,7 +1147,7 @@
             
             const detailsBtn = document.createElement('button');
             detailsBtn.className = 'game-details-btn';
-            detailsBtn.textContent = 'عرض التفاصيل';
+            detailsBtn.textContent = 'عرض الفيديو الترويجي';
             detailsBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 showGameDetails(game, categoryId);
@@ -1053,6 +1165,33 @@
             label.appendChild(card);
             
             return label;
+        }
+
+        function updateCategorySelect() {
+            const categorySelect = document.getElementById('category-select');
+            // إزالة الخيارات الحالية (باستثناء "جميع التصنيفات")
+            while (categorySelect.options.length > 1) {
+                categorySelect.remove(1);
+            }
+            
+            // إضافة التصنيفات الأصلية
+            state.categories.forEach(categoryId => {
+                const category = defaultGamesData[categoryId] || window.cloudCannonGamesData?.[categoryId];
+                if (category) {
+                    const option = document.createElement('option');
+                    option.value = categoryId;
+                    option.textContent = category.title;
+                    categorySelect.appendChild(option);
+                }
+            });
+            
+            // إضافة التصنيفات المخصصة
+            state.customCategories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.title;
+                categorySelect.appendChild(option);
+            });
         }
 
         function handleGameSelection(checkbox, game) {
@@ -1099,29 +1238,31 @@
             playSound('click');
             
             const modal = document.getElementById('game-details-modal');
-            const category = gamesData[categoryId] || state.customCategories.find(c => c.id === categoryId);
+            const category = defaultGamesData[categoryId] || window.cloudCannonGamesData?.[categoryId] || 
+                            state.customCategories.find(c => c.id === categoryId);
             
             document.getElementById('modal-game-title').textContent = game.name;
-            document.getElementById('modal-game-image').src = game.image;
             document.getElementById('modal-game-description').textContent = game.description;
             document.getElementById('modal-game-size').textContent = `${game.size} GB`;
             document.getElementById('modal-game-code').textContent = game.id;
             document.getElementById('modal-game-category').textContent = category ? category.title : 'غير معروف';
             document.getElementById('modal-game-year').textContent = game.year;
             
-            // إضافة مقطع فيديو تجريبي (إن وجد)
-            const trailerContainer = document.getElementById('modal-game-trailer');
-            trailerContainer.innerHTML = '';
-            
-            if (game.trailer) {
-                const iframe = document.createElement('iframe');
-                iframe.width = '100%';
-                iframe.height = '250';
-                iframe.src = `https://www.youtube.com/embed/${game.trailer}`;
-                iframe.frameBorder = '0';
-                iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-                iframe.allowFullscreen = true;
-                trailerContainer.appendChild(iframe);
+            // عرض الفيديو الترويجي
+            const videoContainer = document.getElementById('modal-game-video');
+            if (game.video) {
+                // استخراج ID الفيديو من رابط YouTube
+                let videoId = game.video;
+                if (game.video.includes('youtube.com') || game.video.includes('youtu.be')) {
+                    const url = new URL(game.video.includes('http') ? game.video : `https://${game.video}`);
+                    videoId = url.pathname.includes('youtu.be') 
+                        ? url.pathname.substring(1)
+                        : url.searchParams.get('v');
+                }
+                
+                videoContainer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+            } else {
+                videoContainer.src = 'https://www.youtube.com/embed/dQw4w9WgXcQ'; // فيديو افتراضي
             }
             
             modal.style.display = 'flex';
@@ -1147,12 +1288,17 @@
             
             // إغلاق نافذة التفاصيل
             document.getElementById('close-modal').addEventListener('click', function() {
-                document.getElementById('game-details-modal').style.display = 'none';
+                const modal = document.getElementById('game-details-modal');
+                const video = document.getElementById('modal-game-video');
+                video.src = ''; // إيقاف الفيديو
+                modal.style.display = 'none';
             });
             
             // إغلاق النافذة بالضغط خارجها
             document.getElementById('game-details-modal').addEventListener('click', function(e) {
                 if (e.target === this) {
+                    const video = document.getElementById('modal-game-video');
+                    video.src = ''; // إوقف الفيديو
                     this.style.display = 'none';
                 }
             });
@@ -1160,21 +1306,28 @@
             // تصدير البيانات
             document.getElementById('export-btn').addEventListener('click', exportData);
             
-            // إضافة تصنيف جديد
-            document.getElementById('open-category-modal').addEventListener('click', openAddCategoryModal);
-            document.getElementById('save-category-btn').addEventListener('click', saveNewCategory);
-            document.getElementById('cancel-category-btn').addEventListener('click', closeAddCategoryModal);
-            
-            // إغلاق نافذة التصنيف بالضغط خارجها
-            document.getElementById('add-category-modal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeAddCategoryModal();
-                }
-            });
+            // إضافة تصنيف جديد (للمالك فقط)
+            if (state.isAdmin) {
+                document.getElementById('open-category-modal').addEventListener('click', openAddCategoryModal);
+                document.getElementById('save-category-btn').addEventListener('click', saveNewCategory);
+                document.getElementById('cancel-category-btn').addEventListener('click', closeAddCategoryModal);
+                
+                // إغلاق نافذة التصنيف بالضغط خارجها
+                document.getElementById('add-category-modal').addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeAddCategoryModal();
+                    }
+                });
+            }
             
             // تأثيرات الصوت عند التمرير
-            document.querySelectorAll('.game-card').forEach(card => {
-                card.addEventListener('mouseenter', () => playSound('hover'));
+            document.addEventListener('mouseover', function(e) {
+                if (e.target.classList.contains('game-card') || 
+                    e.target.classList.contains('game-details-btn') ||
+                    e.target.classList.contains('add-category-btn') ||
+                    e.target.id === 'export-btn') {
+                    playSound('hover');
+                }
             });
         }
 
@@ -1183,12 +1336,9 @@
             const selectedCategory = document.getElementById('category-select').value;
             
             // جمع جميع التصنيفات
-            const allCategories = [...state.categories, ...state.customCategories];
+            const allCategories = [...state.categories, ...state.customCategories.map(c => c.id)];
             
             allCategories.forEach(categoryId => {
-                const category = gamesData[categoryId] || state.customCategories.find(c => c.id === categoryId);
-                if (!category) return;
-                
                 const categoryElement = document.getElementById(`category-${categoryId}`);
                 if (!categoryElement) return;
                 
@@ -1204,16 +1354,23 @@
                     const gameMatchesSearch = searchTerm === '' || gameName.includes(searchTerm);
                     const shouldShow = categoryMatches && gameMatchesSearch;
                     
-                    gameCard.parentElement.style.display = shouldShow ? 'block' : 'none';
+                    gameCard.parentElement.parentElement.style.display = shouldShow ? 'block' : 'none';
                     if (shouldShow) visibleGames++;
                 });
                 
                 // إظهار/إخفاء قسم التصنيف بناءً على الألعاب المرئية
                 categoryElement.style.display = visibleGames > 0 ? 'block' : 'none';
+                
+                // إظهار/إخفاء عنوان التصنيف
+                const categoryHeader = categoryElement.querySelector('.category-header');
+                if (categoryHeader) {
+                    categoryHeader.style.display = visibleGames > 0 ? 'flex' : 'none';
+                }
             });
         }
 
         function openAddCategoryModal() {
+            if (!state.isAdmin) return;
             playSound('click');
             document.getElementById('add-category-modal').style.display = 'flex';
         }
@@ -1227,6 +1384,8 @@
         }
 
         function saveNewCategory() {
+            if (!state.isAdmin) return;
+            
             playSound('confirm');
             
             const name = document.getElementById('new-category-name').value.trim();
@@ -1251,22 +1410,18 @@
             state.customCategories.push(newCategory);
             
             // تحديث قائمة التصنيفات في القائمة المنسدلة
-            const categorySelect = document.getElementById('category-select');
-            const option = document.createElement('option');
-            option.value = categoryId;
-            option.textContent = name;
-            categorySelect.appendChild(option);
+            updateCategorySelect();
             
             // إغلاق النافذة
             closeAddCategoryModal();
             
             // إعادة عرض الألعاب مع التصنيف الجديد
-            renderGames();
+            renderGames(defaultGamesData);
             
             // حفظ التصنيفات المخصصة
             saveCustomCategories();
             
-            alert(`تم إضافة التصنيف "${name}" بنجاح! يمكنك الآن إضافة ألعاب إليه.`);
+            alert(`تم إضافة التصنيف "${name}" بنجاح!`);
         }
 
         function exportData() {
@@ -1299,12 +1454,24 @@
                 let gameCategory = 'غير معروف';
                 
                 // البحث في التصنيفات الأصلية
-                for (const categoryId in gamesData) {
-                    const game = gamesData[categoryId].games.find(g => g.id === gameId);
+                for (const categoryId in defaultGamesData) {
+                    const game = defaultGamesData[categoryId].games.find(g => g.id === gameId);
                     if (game) {
                         gameFound = game;
-                        gameCategory = gamesData[categoryId].title;
+                        gameCategory = defaultGamesData[categoryId].title;
                         break;
+                    }
+                }
+                
+                // البحث في البيانات من Cloud Cannon
+                if (!gameFound && window.cloudCannonGamesData) {
+                    for (const categoryId in window.cloudCannonGamesData) {
+                        const game = window.cloudCannonGamesData[categoryId].games.find(g => g.id === gameId);
+                        if (game) {
+                            gameFound = game;
+                            gameCategory = window.cloudCannonGamesData[categoryId].title;
+                            break;
+                        }
                     }
                 }
                 
@@ -1381,34 +1548,55 @@
 
         function toggleAudio() {
             const audioControl = document.getElementById('audio-control');
-            const bgMusic = document.getElementById('background-music');
             
             if (state.audioEnabled) {
-                bgMusic.pause();
+                // إيقاف جميع الأصوات
+                document.querySelectorAll('audio').forEach(audio => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                });
                 audioControl.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                audioControl.style.background = 'linear-gradient(45deg, #666, #999)';
                 state.audioEnabled = false;
             } else {
-                bgMusic.volume = 0.3;
-                bgMusic.play().catch(e => console.log('تعذر تشغيل الصوت:', e));
                 audioControl.innerHTML = '<i class="fas fa-volume-up"></i>';
+                audioControl.style.background = 'linear-gradient(45deg, var(--secondary), var(--primary))';
                 state.audioEnabled = true;
+                // تشغيل صوت عند التفعيل
+                playSound('click');
             }
         }
 
         function playSound(soundType) {
             if (!state.audioEnabled) return;
             
-            const soundMap = {
-                'click': document.getElementById('click-sound'),
-                'hover': document.getElementById('hover-sound'),
-                'confirm': document.getElementById('confirm-sound'),
-                'error': document.getElementById('error-sound')
-            };
-            
-            const sound = soundMap[soundType];
-            if (sound) {
-                sound.currentTime = 0;
-                sound.play().catch(e => console.log('تعذر تشغيل الصوت:', e));
+            try {
+                // استخدام أصوات من مكتبة خارجية تعمل بشكل أفضل
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // تحديد التردد بناءً على نوع الصوت
+                let frequency = 440;
+                switch(soundType) {
+                    case 'click': frequency = 523.25; break; // C5
+                    case 'hover': frequency = 659.25; break; // E5
+                    case 'confirm': frequency = 783.99; break; // G5
+                    case 'error': frequency = 392.00; break; // G4
+                }
+                
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+                
+            } catch (error) {
+                console.log("تعذر تشغيل الصوت:", error);
             }
         }
 
@@ -1432,49 +1620,48 @@
             // تحميل التصنيفات المخصصة
             const savedCategories = localStorage.getItem('gameStoreCustomCategories');
             if (savedCategories) {
-                state.customCategories = JSON.parse(savedCategories);
-                
-                // إضافة التصنيفات المخصصة إلى قائمة التصنيفات
-                const categorySelect = document.getElementById('category-select');
-                state.customCategories.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category.id;
-                    option.textContent = category.title;
-                    categorySelect.appendChild(option);
-                });
+                try {
+                    state.customCategories = JSON.parse(savedCategories);
+                } catch (e) {
+                    state.customCategories = [];
+                }
             }
             
             // تحميل التحديدات السابقة
             const savedSelections = localStorage.getItem('gameStoreSelections');
             if (savedSelections) {
-                const data = JSON.parse(savedSelections);
-                
-                // تعيين المساحة الكلية
-                state.totalSpace = data.totalSpace || 500;
-                document.getElementById('total-space').value = state.totalSpace;
-                
-                // تعيين معلومات المستخدم
-                if (data.userName) document.getElementById('user-name').value = data.userName;
-                if (data.userAddress) document.getElementById('user-address').value = data.userAddress;
-                if (data.userPhone) document.getElementById('user-phone').value = data.userPhone;
-                
-                // تحديد الألعاب المختارة سابقاً
-                if (data.selectedGames && data.selectedGames.length > 0) {
-                    // سنقوم بتحديث هذا بعد عرض الألعاب
-                    setTimeout(() => {
-                        data.selectedGames.forEach(gameId => {
-                            const checkbox = document.querySelector(`input[value="${gameId}"]`);
-                            if (checkbox) {
-                                checkbox.checked = true;
-                                const gameSize = parseFloat(checkbox.dataset.size);
-                                state.selectedGames.add(gameId);
-                                state.selectedSpace += gameSize;
-                            }
-                        });
-                        
-                        state.remainingSpace = state.totalSpace - state.selectedSpace;
-                        updateAreaDisplay();
-                    }, 100);
+                try {
+                    const data = JSON.parse(savedSelections);
+                    
+                    // تعيين المساحة الكلية
+                    state.totalSpace = data.totalSpace || 500;
+                    document.getElementById('total-space').value = state.totalSpace;
+                    
+                    // تعيين معلومات المستخدم
+                    if (data.userName) document.getElementById('user-name').value = data.userName;
+                    if (data.userAddress) document.getElementById('user-address').value = data.userAddress;
+                    if (data.userPhone) document.getElementById('user-phone').value = data.userPhone;
+                    
+                    // حفظ الألعاب المختارة للتعيين لاحقاً
+                    if (data.selectedGames && data.selectedGames.length > 0) {
+                        // سنقوم بتحديد الألعاب بعد عرضها
+                        setTimeout(() => {
+                            data.selectedGames.forEach(gameId => {
+                                const checkbox = document.querySelector(`input[value="${gameId}"]`);
+                                if (checkbox) {
+                                    checkbox.checked = true;
+                                    const gameSize = parseFloat(checkbox.dataset.size);
+                                    state.selectedGames.add(gameId);
+                                    state.selectedSpace += gameSize;
+                                }
+                            });
+                            
+                            state.remainingSpace = state.totalSpace - state.selectedSpace;
+                            updateAreaDisplay();
+                        }, 500);
+                    }
+                } catch (e) {
+                    console.log("خطأ في تحميل البيانات المحفوظة:", e);
                 }
             }
         }
