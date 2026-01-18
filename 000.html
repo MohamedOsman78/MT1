@@ -1,1 +1,235 @@
-/
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.site_title }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00ffcc;
+            --secondary: #ff00ff;
+            --dark: #0f0c29;
+            --gray: #1a1a2e;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, var(--dark), #24243e);
+            color: var(--white);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* نافذة المساحة العائمة - أسفل يمين الشاشة */
+        .floating-area-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(15, 12, 41, 0.9);
+            border: 2px solid var(--primary);
+            border-radius: 15px;
+            padding: 15px;
+            z-index: 9999;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+            backdrop-filter: blur(10px);
+            min-width: 180px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .floating-area-status div {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .floating-area-status .label { color: #aaa; font-size: 0.9em; }
+        .floating-area-status .value { font-weight: bold; color: var(--primary); }
+        .floating-area-status .remaining-only {
+            border-top: 1px solid #444;
+            margin-top: 8px;
+            padding-top: 8px;
+            color: var(--secondary);
+            font-size: 1.1em;
+        }
+
+        /* الهيدر المحسن لـ CloudCannon */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 20px;
+        }
+
+        .editable { transition: 0.3s; }
+        .editable:hover { outline: 2px dashed var(--primary); outline-offset: 10px; }
+
+        /* شبكة الألعاب */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .game-card {
+            background: var(--gray);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid #333;
+            transition: 0.3s;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .game-card:hover { transform: translateY(-10px); border-color: var(--primary); }
+        .game-card.selected { border: 2px solid var(--primary); box-shadow: 0 0 15px var(--primary); }
+
+        .game-img { width: 100%; height: 250px; object-fit: cover; }
+        .game-info { padding: 15px; }
+        .game-name { font-weight: bold; color: var(--primary); font-size: 1.1em; }
+        .game-size { color: var(--secondary); font-size: 0.9em; }
+
+        .check-icon {
+            position: absolute; top: 10px; right: 10px;
+            background: var(--primary); color: var(--dark);
+            width: 30px; height: 30px; border-radius: 50%;
+            display: none; align-items: center; justify-content: center; font-weight: bold;
+        }
+
+        .game-card.selected .check-icon { display: flex; }
+
+        /* زر الصوت */
+        #audio-btn {
+            position: fixed; top: 20px; left: 20px;
+            width: 45px; height: 45px; border-radius: 50%;
+            background: var(--primary); border: none; cursor: pointer; z-index: 1000;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <button id="audio-btn"><i class="fas fa-music"></i></button>
+
+    <div class="floating-area-status">
+        <div><span class="label">المختارة:</span> <span class="value" id="selected-val">0</span> <small>GB</small></div>
+        <div class="remaining-only">
+            <span class="label">المتبقية:</span> <span class="value" id="remain-val">500</span> <small>GB</small>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1 class="editable">{{ page.site_title }}</h1>
+            <p class="editable">{{ page.welcome_message }}</p>
+            <div style="margin-top: 15px;">
+                <label>تعديل المساحة الكلية: </label>
+                <input type="number" id="total-space-input" value="{{ page.default_space }}" style="padding: 5px; border-radius: 5px; background: #000; color: #fff; border: 1px solid var(--primary);">
+            </div>
+        </header>
+
+        <main id="app-content"></main>
+    </div>
+
+    <audio id="bg-music" loop src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"></audio>
+    <audio id="select-sfx" src="https://assets.mixkit.co/sfx/preview/mixkit-positive-interface-click-1112.mp3"></audio>
+
+    <script>
+        const games = [
+            { id: 1, name: "GTA V", size: 95, img: "https://images.alphacoders.com/443/443519.jpg" },
+            { id: 2, name: "FIFA 24", size: 55, img: "https://images.alphacoders.com/132/1325603.jpeg" },
+            { id: 3, name: "Call of Duty", size: 120, img: "https://images7.alphacoders.com/102/1029107.jpg" },
+            { id: 4, name: "God of War", size: 45, img: "https://images8.alphacoders.com/911/911931.jpg" },
+            { id: 5, name: "Spider-Man 2", size: 80, img: "https://images2.alphacoders.com/131/1313620.jpeg" },
+            { id: 6, name: "Elden Ring", size: 60, img: "https://images5.alphacoders.com/115/1150531.jpg" }
+        ];
+
+        let state = {
+            total: {{ page.default_space }},
+            selected: 0,
+            selectedIDs: []
+        };
+
+        function render() {
+            const container = document.getElementById('app-content');
+            container.innerHTML = `<div class="games-grid"></div>`;
+            const grid = container.querySelector('.games-grid');
+
+            games.forEach(game => {
+                const isSelected = state.selectedIDs.includes(game.id);
+                const card = document.createElement('div');
+                card.className = `game-card ${isSelected ? 'selected' : ''}`;
+                card.innerHTML = `
+                    <div class="check-icon">✓</div>
+                    <img src="${game.img}" class="game-img">
+                    <div class="game-info">
+                        <div class="game-name">${game.name}</div>
+                        <div class="game-size">${game.size} GB</div>
+                    </div>
+                `;
+                
+                card.onclick = () => toggleGame(game);
+                grid.appendChild(card);
+            });
+            updateStats();
+        }
+
+        function toggleGame(game) {
+            const index = state.selectedIDs.indexOf(game.id);
+            if (index > -1) {
+                state.selectedIDs.splice(index, 1);
+                state.selected -= game.size;
+            } else {
+                if (state.selected + game.size > state.total) {
+                    alert("المساحة المتبقية غير كافية!");
+                    return;
+                }
+                state.selectedIDs.push(game.id);
+                state.selected += game.size;
+            }
+            playSFX();
+            render();
+        }
+
+        function updateStats() {
+            document.getElementById('selected-val').innerText = state.selected;
+            document.getElementById('remain-val').innerText = state.total - state.selected;
+        }
+
+        // إصلاح مشكلة الصوت
+        const audioBtn = document.getElementById('audio-btn');
+        const bgMusic = document.getElementById('bg-music');
+        
+        audioBtn.onclick = () => {
+            if (bgMusic.paused) {
+                bgMusic.play().catch(e => console.log("User must interact first"));
+                audioBtn.style.background = "#ff00ff";
+            } else {
+                bgMusic.pause();
+                audioBtn.style.background = "#00ffcc";
+            }
+        };
+
+        function playSFX() {
+            const sfx = document.getElementById('select-sfx');
+            sfx.currentTime = 0;
+            sfx.play();
+        }
+
+        document.getElementById('total-space-input').oninput = (e) => {
+            state.total = parseInt(e.target.value) || 0;
+            updateStats();
+        };
+
+        window.onload = render;
+    </script>
+</body>
+</html>
+
